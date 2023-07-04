@@ -13,16 +13,16 @@ from clrnet.datasets import build_dataloader
 
 def main():
     args = parse_args()
-    os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(
-        str(gpu) for gpu in args.gpus)
+    
+    os.environ["CUDA_VISIBLE_DEVICES"] = '0' # 사용하고자 하는 특정 gpu 
 
-    cfg = Config.fromfile('./clrnet/clr_resnet18_tusimple.py')
-    cfg.gpus = len(args.gpus)
+    cfg = Config.fromfile('./configs/clrnet/clr_resnet18_tusimple.py') # 모델 아키텍처 지정
+    cfg.gpus = 1 # gpu 개수 지정
 
-    cfg.load_from = args.load_from # pt파일 경로
+    cfg.load_from = '/home/macaron/바탕화면/CLRNet_research/CLRNet_99.pth' # pt파일 경로
     cfg.resume_from = args.resume_from
     cfg.finetune_from = args.finetune_from
-    cfg.view = args.view
+    cfg.view = args.view # 시각화
     cfg.seed = args.seed
 
     cfg.work_dirs = args.work_dirs if args.work_dirs else cfg.work_dirs
@@ -30,17 +30,11 @@ def main():
     cudnn.benchmark = True
 
     runner = Runner(cfg)
-
-    if args.validate:
-        runner.validate()
-    elif args.test:
-        runner.test()
-    else:
-        runner.train()
-
+    runner.test() # 실행
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
+
     parser.add_argument('--work_dirs',
                         type=str,
                         default=None,
@@ -54,7 +48,7 @@ def parse_args():
     parser.add_argument('--finetune_from',
             default=None,
             help='the checkpoint file to resume from')
-    parser.add_argument('--view', action='store_true', help='whether to view')
+    parser.add_argument('--view', action='store_false', help='whether to view')
     parser.add_argument(
         '--validate',
         action='store_true',
@@ -65,7 +59,6 @@ def parse_args():
         help='whether to test the checkpoint on testing set')
     parser.add_argument('--gpus', nargs='+', type=int, default='0')
     parser.add_argument('--seed', type=int, default=0, help='random seed')
-    
     args = parser.parse_args()
 
     return args

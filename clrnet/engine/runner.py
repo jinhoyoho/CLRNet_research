@@ -6,6 +6,8 @@ import pytorch_warmup as warmup
 import numpy as np
 import random
 import os
+from torchvision.transforms import ToTensor, ToPILImage
+from PIL import Image
 
 from clrnet.models.registry import build_net
 from .registry import build_trainer, build_evaluator
@@ -23,11 +25,11 @@ class Runner(object):
         np.random.seed(cfg.seed)
         random.seed(cfg.seed)
         self.cfg = cfg
-        self.recorder = build_recorder(self.cfg)
+        # self.recorder = build_recorder(self.cfg)
         self.net = build_net(self.cfg)
         self.net = MMDataParallel(self.net,
                                   device_ids=range(self.cfg.gpus)).cuda()
-        self.recorder.logger.info('Network: \n' + str(self.net))
+        # self.recorder.logger.info('Network: \n' + str(self.net))
         self.resume()
         self.optimizer = build_optimizer(self.cfg, self.net)
         self.scheduler = build_scheduler(self.cfg, self.optimizer)
@@ -45,7 +47,7 @@ class Runner(object):
     def resume(self):
         if not self.cfg.load_from and not self.cfg.finetune_from:
             return
-        load_network(self.net, self.cfg.load_from, finetune_from=self.cfg.finetune_from, logger=self.recorder.logger)
+        load_network(self.net, self.cfg.load_from, finetune_from=self.cfg.finetune_from)
 
     def train_epoch(self, epoch, train_loader):
         self.net.train()
@@ -75,73 +77,79 @@ class Runner(object):
                 self.recorder.lr = lr
                 self.recorder.record('train')
 
-    def train(self):
-        self.recorder.logger.info('Build train loader...')
-        train_loader = build_dataloader(self.cfg.dataset.train,
-                                        self.cfg,
-                                        is_train=True)
+    # def train(self):
+    #     self.recorder.logger.info('Build train loader...')
+    #     train_loader = build_dataloader(self.cfg.dataset.train,
+    #                                     self.cfg,
+    #                                     is_train=True)
 
-        self.recorder.logger.info('Start training...')
-        start_epoch = 0
-        if self.cfg.resume_from:
-            start_epoch = resume_network(self.cfg.resume_from, self.net,
-                                         self.optimizer, self.scheduler,
-                                         self.recorder)
-        for epoch in range(start_epoch, self.cfg.epochs):
-            self.recorder.epoch = epoch
-            self.train_epoch(epoch, train_loader)
-            if (epoch +
-                    1) % self.cfg.save_ep == 0 or epoch == self.cfg.epochs - 1:
-                self.save_ckpt()
-            if (epoch +
-                    1) % self.cfg.eval_ep == 0 or epoch == self.cfg.epochs - 1:
-                self.validate()
-            if self.recorder.step >= self.cfg.total_iter:
-                break
-            if self.cfg.lr_update_by_epoch:
-                self.scheduler.step()
+    #     self.recorder.logger.info('Start training...')
+    #     start_epoch = 0
+    #     if self.cfg.resume_from:
+    #         start_epoch = resume_network(self.cfg.resume_from, self.net,
+    #                                      self.optimizer, self.scheduler,
+    #                                      self.recorder)
+    #     for epoch in range(start_epoch, self.cfg.epochs):
+    #         self.recorder.epoch = epoch
+    #         self.train_epoch(epoch, train_loader)
+    #         if (epoch +
+    #                 1) % self.cfg.save_ep == 0 or epoch == self.cfg.epochs - 1:
+    #             self.save_ckpt()
+    #         if (epoch +
+    #                 1) % self.cfg.eval_ep == 0 or epoch == self.cfg.epochs - 1:
+    #             self.validate()
+    #         if self.recorder.step >= self.cfg.total_iter:
+    #             break
+    #         if self.cfg.lr_update_by_epoch:
+    #             self.scheduler.step()
 
 
-    def test(self):
-        if not self.test_loader:
-            self.test_loader = build_dataloader(self.cfg.dataset.test,
-                                                self.cfg,
-                                                is_train=False)
+    def test(self): # test만 실행
+        # if not self.test_loader:
+        #     self.test_loader = build_dataloader(self.cfg.dataset.test,
+        #                                         self.cfg,
+        #                                         is_train=False)
+
+        data = cv2.imread('/home/macaron/바탕화면/CLRNet_research/tusimple_lane.jpg', cv2.IMREAD_COLOR) # 데이터 이미지 불러오기
+        tf_toTensor = ToTensor()
+        data = tf_toTensor(data)
+        print(data)
+        print(data.size())
+        
         self.net.eval()
         predictions = []
-        for i, data in enumerate(tqdm(self.test_loader, desc=f'Testing')):
-            data = self.to_cuda(data)
-            with torch.no_grad():
-                output = self.net(data)
-                output = self.net.module.heads.get_lanes(output)
-                predictions.extend(output)
-            if self.cfg.view:
-                self.test_loader.dataset.view(output, data['meta'])
+        data = self.to_cuda(data)
+        with torch.no_grad():
+            output = self.net(data)
+            output = self.net.module.heads.get_lanes(output)
+            predictions.extend(output)
+        if self.cfg.view:
+            self.test_loader.dataset.view(output, data['meta'])
 
-        metric = self.test_loader.dataset.evaluate(predictions,
-                                                   self.cfg.work_dir)
-        if metric is not None:
-            self.recorder.logger.info('metric: ' + str(metric))
+        # metric = self.test_loader.dataset.evaluate(predictions,
+        #                                            self.cfg.work_dir)
+        # if metric is not None:
+        #     self.recorder.logger.info('metric: ' + str(metric))
 
-    def validate(self):
-        if not self.val_loader:
-            self.val_loader = build_dataloader(self.cfg.dataset.val,
-                                               self.cfg,
-                                               is_train=False)
-        self.net.eval()
-        predictions = []
-        for i, data in enumerate(tqdm(self.val_loader, desc=f'Validate')):
-            data = self.to_cuda(data)
-            with torch.no_grad():
-                output = self.net(data)
-                output = self.net.module.heads.get_lanes(output)
-                predictions.extend(output)
-            if self.cfg.view:
-                self.val_loader.dataset.view(output, data['meta'])
+    # def validate(self):
+    #     if not self.val_loader:
+    #         self.val_loader = build_dataloader(self.cfg.dataset.val,
+    #                                            self.cfg,
+    #                                            is_train=False)
+    #     self.net.eval()
+    #     predictions = []
+    #     for i, data in enumerate(tqdm(self.val_loader, desc=f'Validate')):
+    #         data = self.to_cuda(data)
+    #         with torch.no_grad():
+    #             output = self.net(data)
+    #             output = self.net.module.heads.get_lanes(output)
+    #             predictions.extend(output)
+    #         if self.cfg.view:
+    #             self.val_loader.dataset.view(output, data['meta'])
 
-        metric = self.val_loader.dataset.evaluate(predictions,
-                                                  self.cfg.work_dir)
-        self.recorder.logger.info('metric: ' + str(metric))
+    #     metric = self.val_loader.dataset.evaluate(predictions,
+    #                                               self.cfg.work_dir)
+    #     self.recorder.logger.info('metric: ' + str(metric))
 
     def save_ckpt(self, is_best=False):
         save_model(self.net, self.optimizer, self.scheduler, self.recorder,
