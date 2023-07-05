@@ -18,6 +18,7 @@ from clrnet.utils.recorder import build_recorder
 from clrnet.utils.net_utils import save_model, load_network, resume_network
 from mmcv.parallel import MMDataParallel
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class Runner(object):
     def __init__(self, cfg):
@@ -27,9 +28,7 @@ class Runner(object):
         self.cfg = cfg
         # self.recorder = build_recorder(self.cfg)
         self.net = build_net(self.cfg)
-        self.net = MMDataParallel(self.net,
-                                  device_ids=range(self.cfg.gpus)).cuda()
-        # self.recorder.logger.info('Network: \n' + str(self.net))
+        self.net = MMDataParallel(self.net, device_ids=range(self.cfg.gpus)).cuda()
         self.resume()
         self.optimizer = build_optimizer(self.cfg, self.net)
         self.scheduler = build_scheduler(self.cfg, self.optimizer)
@@ -37,72 +36,20 @@ class Runner(object):
         self.val_loader = None
         self.test_loader = None
 
-    def to_cuda(self, batch):
-        for k in batch:
-            if not isinstance(batch[k], torch.Tensor):
-                continue
-            batch[k] = batch[k].cuda()
-        return batch
-
     def resume(self):
         if not self.cfg.load_from and not self.cfg.finetune_from:
             return
         load_network(self.net, self.cfg.load_from, finetune_from=self.cfg.finetune_from)
+    
+    def img2tensor(self, img):
+    #the format of img needs to be bgr format
 
-    def train_epoch(self, epoch, train_loader):
-        self.net.train()
-        end = time.time()
-        max_iter = len(train_loader)
-        for i, data in enumerate(train_loader):
-            if self.recorder.step >= self.cfg.total_iter:
-                break
-            date_time = time.time() - end
-            self.recorder.step += 1
-            data = self.to_cuda(data)
-            output = self.net(data)
-            self.optimizer.zero_grad()
-            loss = output['loss'].sum()
-            loss.backward()
-            self.optimizer.step()
-            if not self.cfg.lr_update_by_epoch:
-                self.scheduler.step()
-            batch_time = time.time() - end
-            end = time.time()
-            self.recorder.update_loss_stats(output['loss_stats'])
-            self.recorder.batch_time.update(batch_time)
-            self.recorder.data_time.update(date_time)
-
-            if i % self.cfg.log_interval == 0 or i == max_iter - 1:
-                lr = self.optimizer.param_groups[0]['lr']
-                self.recorder.lr = lr
-                self.recorder.record('train')
-
-    # def train(self):
-    #     self.recorder.logger.info('Build train loader...')
-    #     train_loader = build_dataloader(self.cfg.dataset.train,
-    #                                     self.cfg,
-    #                                     is_train=True)
-
-    #     self.recorder.logger.info('Start training...')
-    #     start_epoch = 0
-    #     if self.cfg.resume_from:
-    #         start_epoch = resume_network(self.cfg.resume_from, self.net,
-    #                                      self.optimizer, self.scheduler,
-    #                                      self.recorder)
-    #     for epoch in range(start_epoch, self.cfg.epochs):
-    #         self.recorder.epoch = epoch
-    #         self.train_epoch(epoch, train_loader)
-    #         if (epoch +
-    #                 1) % self.cfg.save_ep == 0 or epoch == self.cfg.epochs - 1:
-    #             self.save_ckpt()
-    #         if (epoch +
-    #                 1) % self.cfg.eval_ep == 0 or epoch == self.cfg.epochs - 1:
-    #             self.validate()
-    #         if self.recorder.step >= self.cfg.total_iter:
-    #             break
-    #         if self.cfg.lr_update_by_epoch:
-    #             self.scheduler.step()
-
+        img = img[..., ::-1]  #bgr2rgb
+        img = img.transpose(2, 0, 1)  #(H, W, CH) -> (CH, H, W)
+        img = np.ascontiguousarray(img)
+        
+        tensor = torch.tensor(img, dtype=torch.float32)
+        return tensor
 
     def test(self): # test만 실행
         # if not self.test_loader:
@@ -110,21 +57,32 @@ class Runner(object):
         #                                         self.cfg,
         #                                         is_train=False)
 
-        data = cv2.imread('/home/macaron/바탕화면/CLRNet_research/tusimple_lane.jpg', cv2.IMREAD_COLOR) # 데이터 이미지 불러오기
-        tf_toTensor = ToTensor()
+        data = cv2.imread('/home/macaron/바탕화면/CLRNet_research/tusimple_lane.jpg') # 데이터 이미지 불러오기
+        img = data
+        # img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])    
+        tf_toTensor = ToTensor() 
         data = tf_toTensor(data)
+        # data = self.img2tensor(data) # tensor로 변환
+        data = data.unsqueeze(dim = 0)
+        data = data.to(device)
         print(data)
         print(data.size())
         
         self.net.eval()
         predictions = []
-        data = self.to_cuda(data)
+
         with torch.no_grad():
             output = self.net(data)
+            print("output1:", output)
             output = self.net.module.heads.get_lanes(output)
+            print("lane:", output)
             predictions.extend(output)
-        if self.cfg.view:
-            self.test_loader.dataset.view(output, data['meta'])
+
+            if output:
+                imshow_lanes(img, output)
+
+        # if self.cfg.view:
+        #     self.test_loader.dataset.view(output, data['meta'])
 
         # metric = self.test_loader.dataset.evaluate(predictions,
         #                                            self.cfg.work_dir)
@@ -154,3 +112,61 @@ class Runner(object):
     def save_ckpt(self, is_best=False):
         save_model(self.net, self.optimizer, self.scheduler, self.recorder,
                    is_best)
+        
+# 차선 시각화
+COLORS = [
+    (255, 0, 0),
+    (0, 255, 0),
+    (0, 0, 255),
+    (255, 255, 0),
+    (255, 0, 255),
+    (0, 255, 255),
+    (128, 255, 0),
+    (255, 128, 0),
+    (128, 0, 255),
+    (255, 0, 128),
+    (0, 128, 255),
+    (0, 255, 128),
+    (128, 255, 255),
+    (255, 128, 255),
+    (255, 255, 128),
+    (60, 180, 0),
+    (180, 60, 0),
+    (0, 60, 180),
+    (0, 180, 60),
+    (60, 0, 180),
+    (180, 0, 60),
+    (255, 0, 0),
+    (0, 255, 0),
+    (0, 0, 255),
+    (255, 255, 0),
+    (255, 0, 255),
+    (0, 255, 255),
+    (128, 255, 0),
+    (255, 128, 0),
+    (128, 0, 255),
+]
+
+
+def imshow_lanes(img, lanes, show=True, out_file=None, width=4):
+    lanes_xys = []
+    for _, lane in enumerate(lanes):
+        xys = []
+        for x, y in lane:
+            if x <= 0 or y <= 0:
+                continue
+            x, y = int(x), int(y)
+            xys.append((x, y))
+        lanes_xys.append(xys)
+
+    if lanes_xys:
+        lanes_xys.sort(key=lambda xys : xys[0][0])
+
+    for idx, xys in enumerate(lanes_xys):
+        for i in range(1, len(xys)):
+            cv2.line(img, xys[i - 1], xys[i], COLORS[idx], thickness=width)
+
+
+    if show:
+        cv2.imshow('view', img)
+        cv2.waitKey(0)
