@@ -35,6 +35,7 @@ class Runner(object):
         self.metric = 0.
         self.val_loader = None
         self.test_loader = None
+        self.cap = cv2.VideoCapture('/home/macaron/바탕화면/lane_detection_ljh/test_dataset/test_video.mp4')
 
     def resume(self):
         if not self.cfg.load_from and not self.cfg.finetune_from:
@@ -57,8 +58,11 @@ class Runner(object):
         #                                         self.cfg,
         #                                         is_train=False)
 
-        data = cv2.imread('/home/macaron/바탕화면/CLRNet_research/tusimple_lane.jpg') # 데이터 이미지 불러오기
-        img = data
+        _, image = self.cap.read()
+        data = image
+
+        #data = cv2.cvtColor(data, cv2.COLOR_BGR2RGB)
+        data = cv2.resize(data, (820, 320), interpolation=cv2.INTER_CUBIC)
         # img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])    
         tf_toTensor = ToTensor() 
         data = tf_toTensor(data)
@@ -79,7 +83,7 @@ class Runner(object):
             predictions.extend(output)
 
             if output:
-                imshow_lanes(img, output)
+                imshow_lanes(image, output)
 
         # if self.cfg.view:
         #     self.test_loader.dataset.view(output, data['meta'])
@@ -108,10 +112,6 @@ class Runner(object):
     #     metric = self.val_loader.dataset.evaluate(predictions,
     #                                               self.cfg.work_dir)
     #     self.recorder.logger.info('metric: ' + str(metric))
-
-    def save_ckpt(self, is_best=False):
-        save_model(self.net, self.optimizer, self.scheduler, self.recorder,
-                   is_best)
         
 # 차선 시각화
 COLORS = [
@@ -148,7 +148,10 @@ COLORS = [
 ]
 
 
-def imshow_lanes(img, lanes, show=True, out_file=None, width=4):
+def imshow_lanes(img, prediction, show=True, width=4):
+    for lanes in prediction:
+        lanes = [lane.to_array(1280, 720) for lane in lanes] # ori_w_img, ori_h_img
+
     lanes_xys = []
     for _, lane in enumerate(lanes):
         xys = []
@@ -169,4 +172,4 @@ def imshow_lanes(img, lanes, show=True, out_file=None, width=4):
 
     if show:
         cv2.imshow('view', img)
-        cv2.waitKey(0)
+        # cv2.waitKey(0)

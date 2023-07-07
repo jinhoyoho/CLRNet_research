@@ -28,9 +28,16 @@ def main():
     cfg.work_dirs = args.work_dirs if args.work_dirs else cfg.work_dirs
 
     cudnn.benchmark = True
+    #image = cv2.imread('/home/macaron/바탕화면/CLRNet_research/tusimple_lane.jpg') # 데이터 이미지 불러오기
 
     runner = Runner(cfg)
-    runner.test() # 실행
+
+    while True:
+        runner.test() # 실행
+
+        if cv2.waitKey(1) & 0xFF == ord('q') : break
+
+    cv2.destroyAllWindows()
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')

@@ -27,9 +27,9 @@ class Lane:
                 (lane_ys > self.max_y)] = self.invalid_value
         return lane_xs
 
-    def to_array(self, cfg):
-        sample_y = cfg.sample_y
-        img_w, img_h = cfg.ori_img_w, cfg.ori_img_h
+    def to_array(self, ori_img_w, ori_img_h):
+        sample_y = range(710, 150, -10)
+        img_w, img_h = ori_img_w, ori_img_h
         ys = np.array(sample_y) / float(img_h)
         xs = self(ys)
         valid_mask = (xs >= 0) & (xs < 1)
