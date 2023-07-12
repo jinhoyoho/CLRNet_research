@@ -9,6 +9,7 @@ from clrnet.datasets.process.transforms import CLRTransforms
 
 from ..registry import PROCESS
 
+#8 3 7 6 55555 44444
 
 @PROCESS.register_module
 class GenerateLaneLine(object):
@@ -24,9 +25,11 @@ class GenerateLaneLine(object):
         self.training = training
 
         if transforms is None:
+            print('1', end = ' ')
             transforms = CLRTransforms(self.img_h, self.img_w)
 
         if transforms is not None:
+            print('2', end = ' ')
             img_transforms = []
             for aug in transforms:
                 p = aug['p']
@@ -50,6 +53,8 @@ class GenerateLaneLine(object):
         self.transform = iaa.Sequential(img_transforms)
 
     def lane_to_linestrings(self, lanes):
+        print('3', end = ' ')
+
         lines = []
         for lane in lanes:
             lines.append(LineString(lane))
@@ -57,6 +62,8 @@ class GenerateLaneLine(object):
         return lines
 
     def sample_lane(self, points, sample_ys):
+        print('4', end = ' ')
+
         # this function expects the points to be sorted
         points = np.array(points)
         if not np.all(points[1:, 1] < points[:-1, 1]):
@@ -92,7 +99,9 @@ class GenerateLaneLine(object):
 
         return xs_outside_image, xs_inside_image
 
-    def filter_lane(self, lane):
+    def filter_lane(self, lane): 
+        print('5', end = ' ')
+
         assert lane[-1][1] <= lane[0][1]
         filtered_lane = []
         used = set()
@@ -104,6 +113,8 @@ class GenerateLaneLine(object):
         return filtered_lane
 
     def transform_annotation(self, anno, img_wh=None):
+        print('6', end = ' ')
+
         img_w, img_h = self.img_w, self.img_h
 
         old_lanes = anno['lanes']
@@ -169,6 +180,8 @@ class GenerateLaneLine(object):
         return new_anno
 
     def linestrings_to_lanes(self, lines):
+        print('7', end = ' ')
+
         lanes = []
         for line in lines:
             lanes.append(line.coords)
@@ -176,23 +189,19 @@ class GenerateLaneLine(object):
         return lanes
 
     def __call__(self, sample):
+        print('8', end = ' ')
+
         img_org = sample['img']
         line_strings_org = self.lane_to_linestrings(sample['lanes'])
         line_strings_org = LineStringsOnImage(line_strings_org,
                                               shape=img_org.shape)
 
         for i in range(30):
-            if self.training:
-                mask_org = SegmentationMapsOnImage(sample['mask'],
-                                                   shape=img_org.shape)
-                img, line_strings, seg = self.transform(
-                    image=img_org.copy().astype(np.uint8),
-                    line_strings=line_strings_org,
-                    segmentation_maps=mask_org)
-            else:
-                img, line_strings = self.transform(
-                    image=img_org.copy().astype(np.uint8),
-                    line_strings=line_strings_org)
+            
+            img, line_strings = self.transform(
+                image=img_org.copy().astype(np.uint8),
+                line_strings=line_strings_org)
+            
             line_strings.clip_out_of_image_()
             new_anno = {'lanes': self.linestrings_to_lanes(line_strings)}
             try:
@@ -214,5 +223,7 @@ class GenerateLaneLine(object):
         sample['gt_points'] = new_anno['lanes']
         sample['seg'] = seg.get_arr() if self.training else np.zeros(
             img_org.shape)
+        
+        print('----------------')
 
         return sample

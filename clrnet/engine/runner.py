@@ -41,16 +41,6 @@ class Runner(object):
         if not self.cfg.load_from and not self.cfg.finetune_from:
             return
         load_network(self.net, self.cfg.load_from, finetune_from=self.cfg.finetune_from)
-    
-    def img2tensor(self, img):
-    #the format of img needs to be bgr format
-
-        img = img[..., ::-1]  #bgr2rgb
-        img = img.transpose(2, 0, 1)  #(H, W, CH) -> (CH, H, W)
-        img = np.ascontiguousarray(img)
-        
-        tensor = torch.tensor(img, dtype=torch.float32)
-        return tensor
 
     def test(self): # test만 실행
         # if not self.test_loader:
@@ -59,14 +49,17 @@ class Runner(object):
         #                                         is_train=False)
 
         _, image = self.cap.read()
+        image = cv2.imread('/home/macaron/바탕화면/CLRNet_research/tusimple_lane.jpg') # 데이터 이미지 불러오기
+
         data = image
 
         #data = cv2.cvtColor(data, cv2.COLOR_BGR2RGB)
         data = cv2.resize(data, (820, 320), interpolation=cv2.INTER_CUBIC)
         # img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])    
-        tf_toTensor = ToTensor() 
-        data = tf_toTensor(data)
+        data = data.astype(np.float32) / 255.
+        data = to_tensor(data)
         # data = self.img2tensor(data) # tensor로 변환
+        data = data.permute(2, 0, 1)
         data = data.unsqueeze(dim = 0)
         data = data.to(device)
         print(data)
@@ -173,3 +166,27 @@ def imshow_lanes(img, prediction, show=True, width=4):
     if show:
         cv2.imshow('view', img)
         # cv2.waitKey(0)
+
+
+
+def to_tensor(data):
+    """Convert objects of various python types to :obj:`torch.Tensor`.
+
+    Supported types are: :class:`numpy.ndarray`, :class:`torch.Tensor`,
+    :class:`Sequence`, :class:`int` and :class:`float`.
+
+    Args:
+        data (torch.Tensor | numpy.ndarray | Sequence | int | float): Data to
+            be converted.
+    """
+
+    if isinstance(data, torch.Tensor):
+        return data
+    elif isinstance(data, np.ndarray):
+        return torch.from_numpy(data).float()
+    elif isinstance(data, int):
+        return torch.LongTensor([data])
+    elif isinstance(data, float):
+        return torch.FloatTensor([data])
+    else:
+        raise TypeError(f'type {type(data)} cannot be converted to tensor.')

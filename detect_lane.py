@@ -16,10 +16,10 @@ def main():
     
     os.environ["CUDA_VISIBLE_DEVICES"] = '0' # 사용하고자 하는 특정 gpu 
 
-    cfg = Config.fromfile('./configs/clrnet/clr_resnet18_tusimple.py') # 모델 아키텍처 지정
+    cfg = Config.fromfile('./configs/clrnet/clr_resnet34_culane.py') # 모델 아키텍처 지정
     cfg.gpus = 1 # gpu 개수 지정
 
-    cfg.load_from = '/home/macaron/바탕화면/CLRNet_research/CLRNet_99.pth' # pt파일 경로
+    cfg.load_from = '/home/macaron/바탕화면/clrnet_resnet34_culane_9.pth' # pt파일 경로
     cfg.resume_from = args.resume_from
     cfg.finetune_from = args.finetune_from
     cfg.view = args.view # 시각화
@@ -28,8 +28,7 @@ def main():
     cfg.work_dirs = args.work_dirs if args.work_dirs else cfg.work_dirs
 
     cudnn.benchmark = True
-    #image = cv2.imread('/home/macaron/바탕화면/CLRNet_research/tusimple_lane.jpg') # 데이터 이미지 불러오기
-
+    
     runner = Runner(cfg)
 
     while True:

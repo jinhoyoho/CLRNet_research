@@ -16,7 +16,7 @@ def main():
     os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(
         str(gpu) for gpu in args.gpus)
 
-    cfg = Config.fromfile('./clrnet/clr_resnet18_tusimple.py')
+    cfg = Config.fromfile('./clrnet/clr_resnet34_culane.py')
     cfg.gpus = len(args.gpus)
 
     cfg.load_from = args.load_from # pt파일 경로
