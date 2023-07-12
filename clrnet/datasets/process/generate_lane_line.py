@@ -5,7 +5,7 @@ import imgaug.augmenters as iaa
 from imgaug.augmentables.lines import LineString, LineStringsOnImage
 from imgaug.augmentables.segmaps import SegmentationMapsOnImage
 from scipy.interpolate import InterpolatedUnivariateSpline
-from clrnet.datasets.process.transforms import CLRTransforms
+from clrnet.datasets.process.transforms import CLRTransforms, Resize
 
 from ..registry import PROCESS
 
@@ -13,8 +13,8 @@ from ..registry import PROCESS
 
 @PROCESS.register_module
 class GenerateLaneLine(object):
-    def __init__(self, transforms=None, cfg=None, training=True):
-        self.transforms = transforms
+    def __init__(self, transforms=None, cfg=None):
+        self.transforms = Resize((self.img_h, self.img_w))
         self.img_w, self.img_h = cfg.img_w, cfg.img_h
         self.num_points = cfg.num_points
         self.n_offsets = cfg.num_points
@@ -22,35 +22,7 @@ class GenerateLaneLine(object):
         self.strip_size = self.img_h / self.n_strips
         self.max_lanes = cfg.max_lanes
         self.offsets_ys = np.arange(self.img_h, -1, -self.strip_size)
-        self.training = training
 
-        if transforms is None:
-            print('1', end = ' ')
-            transforms = CLRTransforms(self.img_h, self.img_w)
-
-        if transforms is not None:
-            print('2', end = ' ')
-            img_transforms = []
-            for aug in transforms:
-                p = aug['p']
-                if aug['name'] != 'OneOf':
-                    img_transforms.append(
-                        iaa.Sometimes(p=p,
-                                      then_list=getattr(
-                                          iaa,
-                                          aug['name'])(**aug['parameters'])))
-                else:
-                    img_transforms.append(
-                        iaa.Sometimes(
-                            p=p,
-                            then_list=iaa.OneOf([
-                                getattr(iaa,
-                                        aug_['name'])(**aug_['parameters'])
-                                for aug_ in aug['transforms']
-                            ])))
-        else:
-            img_transforms = []
-        self.transform = iaa.Sequential(img_transforms)
 
     def lane_to_linestrings(self, lanes):
         print('3', end = ' ')
@@ -192,7 +164,7 @@ class GenerateLaneLine(object):
         print('8', end = ' ')
 
         img_org = sample['img']
-        line_strings_org = self.lane_to_linestrings(sample['lanes'])
+        line_strings_org = self.lane_to_linestrings(sample['lanes']) # 3
         line_strings_org = LineStringsOnImage(line_strings_org,
                                               shape=img_org.shape)
 
@@ -221,8 +193,6 @@ class GenerateLaneLine(object):
         sample['lane_line'] = label
         sample['lanes_endpoints'] = lane_endpoints
         sample['gt_points'] = new_anno['lanes']
-        sample['seg'] = seg.get_arr() if self.training else np.zeros(
-            img_org.shape)
         
         print('----------------')
 

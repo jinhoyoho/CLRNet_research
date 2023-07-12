@@ -35,8 +35,8 @@ class Runner(object):
         self.metric = 0.
         self.val_loader = None
         self.test_loader = None
-        self.cap = cv2.VideoCapture('/home/macaron/바탕화면/lane_detection_ljh/test_dataset/test_video.mp4')
-
+        #self.cap = cv2.VideoCapture('/home/macaron/바탕화면/lane_detection_ljh/test_dataset/test_video.mp4')
+        self.cap = cv2.VideoCapture('./FMTC_drive_video_lane3.mp4')
     def resume(self):
         if not self.cfg.load_from and not self.cfg.finetune_from:
             return
@@ -49,30 +49,25 @@ class Runner(object):
         #                                         is_train=False)
 
         _, image = self.cap.read()
-        image = cv2.imread('/home/macaron/바탕화면/CLRNet_research/tusimple_lane.jpg') # 데이터 이미지 불러오기
-
-        data = image
+        #image = cv2.imread('/home/macaron/바탕화면/CLRNet/data/tusimple/clips/0530/1492626760788443246_0/20.jpg') # 데이터 이미지 불러오기
 
         #data = cv2.cvtColor(data, cv2.COLOR_BGR2RGB)
-        data = cv2.resize(data, (820, 320), interpolation=cv2.INTER_CUBIC)
+        image = cv2.resize(image, (820, 320), interpolation=cv2.INTER_CUBIC)
+        data = image
         # img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])    
-        data = data.astype(np.float32) / 255.
+        data = data.astype(np.float32) / 255.0
         data = to_tensor(data)
         # data = self.img2tensor(data) # tensor로 변환
         data = data.permute(2, 0, 1)
         data = data.unsqueeze(dim = 0)
         data = data.to(device)
-        print(data)
-        print(data.size())
         
         self.net.eval()
         predictions = []
 
         with torch.no_grad():
             output = self.net(data)
-            print("output1:", output)
             output = self.net.module.heads.get_lanes(output)
-            print("lane:", output)
             predictions.extend(output)
 
             if output:
@@ -143,8 +138,8 @@ COLORS = [
 
 def imshow_lanes(img, prediction, show=True, width=4):
     for lanes in prediction:
-        lanes = [lane.to_array(1280, 720) for lane in lanes] # ori_w_img, ori_h_img
-
+        lanes = [lane.to_array(820, 320) for lane in lanes] # ori_w_img, ori_h_img
+    
     lanes_xys = []
     for _, lane in enumerate(lanes):
         xys = []
@@ -155,17 +150,19 @@ def imshow_lanes(img, prediction, show=True, width=4):
             xys.append((x, y))
         lanes_xys.append(xys)
 
-    if lanes_xys:
-        lanes_xys.sort(key=lambda xys : xys[0][0])
+    try:
+        if lanes_xys:
+            lanes_xys.sort(key=lambda xys : xys[0][0])
 
-    for idx, xys in enumerate(lanes_xys):
-        for i in range(1, len(xys)):
-            cv2.line(img, xys[i - 1], xys[i], COLORS[idx], thickness=width)
+        for idx, xys in enumerate(lanes_xys):
+            for i in range(1, len(xys)):
+                cv2.line(img, xys[i - 1], xys[i], COLORS[idx], thickness=width)
+    except:
+        print("Detect Fail!")
 
 
     if show:
         cv2.imshow('view', img)
-        # cv2.waitKey(0)
 
 
 

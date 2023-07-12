@@ -30,13 +30,12 @@ def main():
     cudnn.benchmark = True
     
     runner = Runner(cfg)
-
     while True:
         runner.test() # 실행
 
-        if cv2.waitKey(1) & 0xFF == ord('q') : break
-
-    cv2.destroyAllWindows()
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            cv2.destroyAllWindows() 
+            break
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
