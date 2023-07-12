@@ -50,7 +50,7 @@ class Runner(object):
 
         _, image = self.cap.read()
         #image = cv2.imread('/home/macaron/바탕화면/CLRNet/data/tusimple/clips/0530/1492626760788443246_0/20.jpg') # 데이터 이미지 불러오기
-
+        ori_img = image
         #data = cv2.cvtColor(data, cv2.COLOR_BGR2RGB)
         image = cv2.resize(image, (820, 320), interpolation=cv2.INTER_CUBIC)
         data = image
@@ -69,9 +69,7 @@ class Runner(object):
             output = self.net(data)
             output = self.net.module.heads.get_lanes(output)
             predictions.extend(output)
-
-            if output:
-                imshow_lanes(image, output)
+            imshow_lanes(ori_img, output)
 
         # if self.cfg.view:
         #     self.test_loader.dataset.view(output, data['meta'])
@@ -138,7 +136,7 @@ COLORS = [
 
 def imshow_lanes(img, prediction, show=True, width=4):
     for lanes in prediction:
-        lanes = [lane.to_array(820, 320) for lane in lanes] # ori_w_img, ori_h_img
+        lanes = [lane.to_array(640, 480) for lane in lanes] # ori_w_img, ori_h_img
     
     lanes_xys = []
     for _, lane in enumerate(lanes):

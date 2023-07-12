@@ -5,7 +5,7 @@ import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import argparse
 import numpy as np
-import random
+import time
 from clrnet.utils.config import Config
 from clrnet.engine.runner import Runner
 from clrnet.datasets import build_dataloader
@@ -18,24 +18,36 @@ def main():
 
     cfg = Config.fromfile('./configs/clrnet/clr_resnet34_culane.py') # 모델 아키텍처 지정
     cfg.gpus = 1 # gpu 개수 지정
-
     cfg.load_from = '/home/macaron/바탕화면/clrnet_resnet34_culane_9.pth' # pt파일 경로
     cfg.resume_from = args.resume_from
     cfg.finetune_from = args.finetune_from
     cfg.view = args.view # 시각화
     cfg.seed = args.seed
+    
+    prevTime = time.time()		# previous time
 
     cfg.work_dirs = args.work_dirs if args.work_dirs else cfg.work_dirs
 
     cudnn.benchmark = True
-    
+
+    mean_fps = np.array([]) # 평균 프레임 구하기
+
     runner = Runner(cfg)
+
     while True:
         runner.test() # 실행
+
+        curTime = time.time()	# current time
+        fps = 1 / (curTime - prevTime)
+        mean_fps = np.append(mean_fps, fps)
+        prevTime = curTime
+        print("FPS : ", fps) # 프레임 수 문자열에 저장
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cv2.destroyAllWindows() 
             break
+
+    print('평균 프레임: ', mean_fps.mean())
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
