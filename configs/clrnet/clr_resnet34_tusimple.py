@@ -9,7 +9,7 @@ backbone = dict(
 )
 
 num_points = 72
-max_lanes = 5
+max_lanes = 2
 sample_y = range(710, 150, -10)
 
 heads = dict(type='CLRHead',
@@ -44,11 +44,11 @@ eval_ep = 3
 save_ep = epochs
 
 img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])
-ori_img_w = 1280
-ori_img_h = 720
+ori_img_w = 640
+ori_img_h = 480
 img_h = 320
 img_w = 800
-cut_height = 160 
+cut_height = 0
 
 train_process = [
     dict(

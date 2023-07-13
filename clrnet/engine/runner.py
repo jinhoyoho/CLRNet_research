@@ -1,21 +1,12 @@
-import time
 import cv2
 import torch
 from tqdm import tqdm
 import pytorch_warmup as warmup
 import numpy as np
 import random
-import os
-from torchvision.transforms import ToTensor, ToPILImage
-from PIL import Image
 
 from clrnet.models.registry import build_net
-from .registry import build_trainer, build_evaluator
-from .optimizer import build_optimizer
-from .scheduler import build_scheduler
-from clrnet.datasets import build_dataloader
-from clrnet.utils.recorder import build_recorder
-from clrnet.utils.net_utils import save_model, load_network, resume_network
+from clrnet.utils.net_utils import load_network
 from mmcv.parallel import MMDataParallel
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -26,15 +17,10 @@ class Runner(object):
         np.random.seed(cfg.seed)
         random.seed(cfg.seed)
         self.cfg = cfg
-        # self.recorder = build_recorder(self.cfg)
         self.net = build_net(self.cfg)
         self.net = MMDataParallel(self.net, device_ids=range(self.cfg.gpus)).cuda()
         self.resume()
-        self.optimizer = build_optimizer(self.cfg, self.net)
-        self.scheduler = build_scheduler(self.cfg, self.optimizer)
-        self.metric = 0.
-        self.val_loader = None
-        self.test_loader = None
+        
         #self.cap = cv2.VideoCapture('/home/macaron/바탕화면/lane_detection_ljh/test_dataset/test_video.mp4')
         self.cap = cv2.VideoCapture('./FMTC_drive_video_lane3.mp4')
     def resume(self):
@@ -43,11 +29,6 @@ class Runner(object):
         load_network(self.net, self.cfg.load_from, finetune_from=self.cfg.finetune_from)
 
     def test(self): # test만 실행
-        # if not self.test_loader:
-        #     self.test_loader = build_dataloader(self.cfg.dataset.test,
-        #                                         self.cfg,
-        #                                         is_train=False)
-
         _, image = self.cap.read()
         #image = cv2.imread('/home/macaron/바탕화면/CLRNet/data/tusimple/clips/0530/1492626760788443246_0/20.jpg') # 데이터 이미지 불러오기
         ori_img = image
@@ -70,40 +51,12 @@ class Runner(object):
             output = self.net.module.heads.get_lanes(output)
             predictions.extend(output)
             imshow_lanes(ori_img, output)
-
-        # if self.cfg.view:
-        #     self.test_loader.dataset.view(output, data['meta'])
-
-        # metric = self.test_loader.dataset.evaluate(predictions,
-        #                                            self.cfg.work_dir)
-        # if metric is not None:
-        #     self.recorder.logger.info('metric: ' + str(metric))
-
-    # def validate(self):
-    #     if not self.val_loader:
-    #         self.val_loader = build_dataloader(self.cfg.dataset.val,
-    #                                            self.cfg,
-    #                                            is_train=False)
-    #     self.net.eval()
-    #     predictions = []
-    #     for i, data in enumerate(tqdm(self.val_loader, desc=f'Validate')):
-    #         data = self.to_cuda(data)
-    #         with torch.no_grad():
-    #             output = self.net(data)
-    #             output = self.net.module.heads.get_lanes(output)
-    #             predictions.extend(output)
-    #         if self.cfg.view:
-    #             self.val_loader.dataset.view(output, data['meta'])
-
-    #     metric = self.val_loader.dataset.evaluate(predictions,
-    #                                               self.cfg.work_dir)
-    #     self.recorder.logger.info('metric: ' + str(metric))
         
 # 차선 시각화
 COLORS = [
-    (255, 0, 0),
-    (0, 255, 0),
-    (0, 0, 255),
+    (255, 0, 0), # B
+    (0, 255, 0), # G
+    (0, 0, 255), # R
     (255, 255, 0),
     (255, 0, 255),
     (0, 255, 255),

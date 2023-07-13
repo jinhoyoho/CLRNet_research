@@ -28,7 +28,7 @@ class Lane:
         return lane_xs
 
     def to_array(self, ori_img_w, ori_img_h):
-        sample_y = range(710, 150, -10)
+        sample_y = range(470, 150, -10) # 차선 높이 설정
         img_w, img_h = ori_img_w, ori_img_h
         ys = np.array(sample_y) / float(img_h)
         xs = self(ys)
