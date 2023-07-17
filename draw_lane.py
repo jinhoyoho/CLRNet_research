@@ -88,6 +88,28 @@ lane = [[0.46868697, 0.66388159],
  [0.05764965, 0.99236094],
  [0.04866111, 1.        ]]
 
+# # 중심 구하는 것
+# try:
+#     if count:
+#         self.lanes = [] # 차선 저장
+        
+#         for idx in range(count):
+#             lane = lanes[idx]
+#             x, y = int(np.mean(lane, axis=0)[0]), int(np.mean(lane, axis=0)[1]) # 점의 x, y의 평균값
+#             cv2.line(ori_img, (x, y), (x, y), (255,0,0), 20)
+#             self.lanes.append((x, y)) # 차선의 평균 좌표 구하기
+        
+#         self.center = (int(np.mean(self.lanes, axis=0)[0]), int(np.mean(self.lanes, axis=0)[1]))
+#         cv2.line(ori_img, (self.center[0], self.center[1]), (self.center[0], self.center[1]), (0,0,255), 20)
+#         print("Center: ", self.center)
+        
+#         print("Difference with center:", self.center[1] - img_center[1])
+
+        
+
+# except:
+#     print("Detect Fail 2!")
+
 
 lane = np.array(lane)
 x = list()
