@@ -9,7 +9,7 @@ backbone = dict(
 )
 
 num_points = 72
-max_lanes = 5
+max_lanes = 2
 sample_y = range(710, 150, -10)
 
 heads = dict(type='CLRHead',
@@ -34,7 +34,7 @@ neck = dict(type='FPN',
 test_parameters = dict(conf_threshold=0.40, nms_thres=50, nms_topk=max_lanes)
 
 epochs = 70 
-batch_size = 10 
+batch_size = 2
 
 optimizer = dict(type='AdamW', lr=0.3e-3)  # 3e-4 for batchsize 8
 total_iter = (3616 // batch_size + 1) * epochs
@@ -44,11 +44,11 @@ eval_ep = 1
 save_ep = epochs
 
 img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])
-ori_img_w = 1280
-ori_img_h = 720
+ori_img_w = 640
+ori_img_h = 480
 img_h = 320
 img_w = 800
-cut_height = 160 
+cut_height = 0 
 
 train_process = [
     dict(

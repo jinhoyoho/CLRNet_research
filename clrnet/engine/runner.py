@@ -3,30 +3,40 @@ import torch
 import numpy as np
 import random
 import rospy
+import os
+import sys
 
 from clrnet.models.registry import build_net
 from clrnet.utils.net_utils import load_network
 from mmcv.parallel import MMDataParallel
-from std_msgs.msg import Float64
+from std_msgs.msg import Int16
+
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))) + "/src/sensor/CLRNet_research")
+
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class Runner(object):
     def __init__(self, cfg):
-        self.steer = rospy.Publisher("stop", Float64, queue_size=1)
+        self.steer_pub = rospy.Publisher("lane", Int16, queue_size=1)
         torch.manual_seed(cfg.seed)
         np.random.seed(cfg.seed)
         random.seed(cfg.seed)
         self.cfg = cfg
         self.net = build_net(self.cfg)
         self.net = MMDataParallel(self.net, device_ids=range(self.cfg.gpus)).cuda()
-        self.resume()
+        self.resume() # 이거 안하면 검출 안됨
         self.right_lane = []
         self.left_lane = []
         self.center = [0,0]
+        self.steer = 0
         
-        #self.cap = cv2.VideoCapture('/home/macaron/바탕화면/lane_detection_ljh/test_dataset/test_video.mp4')
-        self.cap = cv2.VideoCapture('./FMTC_drive_video_lane3.mp4')
+        self.cap = cv2.VideoCapture(0) # 카메라 구동
+        # self.cap = cv2.VideoCapture('/home/macaron/바탕화면/lane_detection_ljh/test_dataset/test_video.mp4')
+        self.cap = cv2.VideoCapture(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) +\
+        "/FMTC_drive_video_lane3.mp4")
+        #self.cap = cv2.VideoCapture('/home/macaron/Desktop/FMTC_drive_video_lane3.mp4')
+        #self.cap = cv2.VideoCapture('./FMTC_drive_video_lane3.mp4')
 
     def resume(self):
         if not self.cfg.load_from and not self.cfg.finetune_from:
@@ -35,93 +45,78 @@ class Runner(object):
 
     def test(self): # test만 실행
     
-        _, image = self.cap.read()
-        #image = cv2.imread('/home/macaron/바탕화면/CLRNet/data/tusimple/clips/0530/1492626760788443246_0/20.jpg') # 데이터 이미지 불러오기
-        ori_img = image
-        img_center = (ori_img.shape[1] // 2, ori_img.shape[0] // 2) # w, h
-        #data = cv2.cvtColor(data, cv2.COLOR_BGR2RGB)
-        image = cv2.resize(image, (820, 320), interpolation=cv2.INTER_CUBIC)
-        data = image
-        # img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])    
-        data = data.astype(np.float32) / 255.0
-        data = to_tensor(data)
-        # data = self.img2tensor(data) # tensor로 변환
-        data = data.permute(2, 0, 1)
-        data = data.unsqueeze(dim = 0)
-        data = data.to(device)
+        ret, image = self.cap.read()
         
-        self.net.eval()
-        predictions = []
+        if ret:
+            ori_img = image
+            # self.center = [ori_img.shape[1] // 2, ori_img.shape[0] // 2] # w, h
 
-        with torch.no_grad():
-            output = self.net(data)
-            output = self.net.module.heads.get_lanes(output)
-            predictions.extend(output)
-            lanes, count = imshow_lanes(ori_img, output) # 차선과 나온 개수
-        
-        try:
-            for idx in range(count): # 차선 탐색
-                lane = lanes[idx]
-                if lane[0][0] < img_center[0]: # 중심보다 왼쪽에 있다면
-                    self.left_lane = [[item[0] for item in lane], [item[1] for item in lane]]
-                else: 
-                    self.right_lane = [[item[0] for item in lane], [item[1] for item in lane]] # x와 y를 저장
+            p1 =  [215, 115]  # 좌상
+            p2 =  [405, 115] # 우상
+            p3 =  [640, 460] # 우하
+            p4 =  [0, 460]  # 좌하
+            # corners_point_arr는 변환 이전 이미지 좌표 4개 
+            corner_points_arr = np.float32([p1, p2, p3, p4])
+            height, width = image.shape[0], image.shape[1]
 
+            image_p1 = [20, 0] # 좌상
+            image_p2 = [width-20, 0] # 우상
+            image_p3 = [width - width//4, height] # 우하
+            image_p4 = [width//4, height] # 좌하
+
+            image_params = np.float32([image_p1, image_p2, image_p3, image_p4])
+            mat = cv2.getPerspectiveTransform(corner_points_arr, image_params) # mat = 변환행렬(3*3 행렬) 반
+            data = cv2.warpPerspective(image, mat, (width, height))
             
-            lk, rk = [0, 0]
+            ori_img = data
 
-            lpt1 = (min(self.left_lane[0]), max(self.left_lane[1]))
-            lpt2 = (max(self.left_lane[0]), min(self.left_lane[1]))
-            lk = self.extendLine(lpt1, lpt2)
+            data = cv2.resize(data, (820, 320), interpolation=cv2.INTER_CUBIC)
+            # img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])    
+            data = data.astype(np.float32) / 255.0
+            data = to_tensor(data)
+            # data = self.img2tensor(data) # tensor로 변환
+            data = data.permute(2, 0, 1)
+            data = data.unsqueeze(dim = 0)
+            data = data.to(device)
             
-            rpt1 = (min(self.right_lane[0]), min(self.right_lane[1]))
-            rpt2 = (max(self.right_lane[0]), max(self.right_lane[1]))
-            rk = self.extendLine(rpt1, rpt2)
+            self.net.eval()
+            predictions = []
 
-            print("lk, rk:", lk, rk)
-
-
-            # K = [lk, rk]
-            # 보정 계수 조정
-            a = 20
-            b = 7 
-            w = img_center[1]
-
+            with torch.no_grad():
+                output = self.net(data)
+                output = self.net.module.heads.get_lanes(output)
+                predictions.extend(output)
+                lanes, count = imshow_lanes(ori_img, output) # 차선과 나온 개수
             
-            if lk == 0 and rk == 0:
-                #########################
-                #print("Detected Nothing") 
-                #########################
-                self.currentDirection = 0
-                self.center[0] += 0
-            elif lk == 0:
-                self.currentDirection = -1
-                self.center[0] -= int(a * (abs(rk) - abs(lk)))
-            elif rk == 0:
-                self.currentDirection = 1
-                self.center[0] += int(a * (abs(lk) - abs(rk)))
-            else:
-                if abs(lk) < abs(rk):
-                    self.currentDirection = 1
-                    self.center[0] += int(b * abs(abs(lk) - abs(rk)))
-                else:
-                    self.currentDirection = -1
-                    self.center[0] -= int(b * abs(abs(rk) - abs(lk)))
-
-            steer = np.deg2rad(-(self.center[0] - w // 2))
-
-            print("steer:" , steer)
+            try:
+                if count:
+                    self.lanes = [] # 차선 저장
+                    
+                    for idx in range(count):
+                        lane = lanes[idx]
+                        x, y = int(np.mean(lane, axis=0)[0]), int(np.mean(lane, axis=0)[1]) # 점의 x, y의 평균값
+                        cv2.line(ori_img, (x, y), (x, y), (255,0,0), 20)
+                        self.lanes.append((x, y)) # 차선의 평균 좌표 구하기
+                    
+                    self.center = (int(np.mean(self.lanes, axis=0)[0]), int(np.mean(self.lanes, axis=0)[1]))
+                    cv2.line(ori_img, (self.center[0], self.center[1]), (self.center[0], self.center[1]), (0,0,255), 20)
+                    print("Center: ", self.center)
+                    
+                    print("Difference with center:", self.center[0] - ori_img.shape[1] // 2)
+                    
+                    self.steer = int(self.center[0] - ori_img.shape[1] // 2)
+                
+            except:
+                print("ERROR!")
+                self.steer = 0
             
-        except:
-            print("ERROR!")
-            steer = 0
-          
-        
-        cv2.imshow('image', ori_img)
-        self.steer.publish(steer)
+            
+            cv2.imshow('image', ori_img)
+            self.steer_pub.publish(self.steer)
 
-        # print("error!")
-        # return #종료
+        else:
+            print("Video 없음!")
+            return
 
     def extendLine(self, pt1, pt2):
         if pt1[0] - pt2[0] != 0:
