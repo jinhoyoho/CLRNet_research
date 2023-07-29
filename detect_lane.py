@@ -16,15 +16,16 @@ def main():
     
     os.environ["CUDA_VISIBLE_DEVICES"] = '0' # 사용하고자 하는 특정 gpu 
     
-    cfg = Config.fromfile((os.path.dirname(os.path.abspath(__file__))) +\
-        "/configs/clrnet/clr_resnet34_culane.py")
+    # cfg = Config.fromfile((os.path.dirname(os.path.abspath(__file__))) +\
+    #     "/configs/clrnet/clr_resnet34_culane.py")
 
-    cfg = Config.fromfile('./configs/clrnet/clr_resnet34_culane.py') # 모델 아키텍처 지정
-    #cfg = Config.fromfile('./configs/clrnet/clr_resnet34_tusimple.py') # 모델 아키텍처 지정
+    #cfg = Config.fromfile('./configs/clrnet/clr_resnet34_culane.py') # 모델 아키텍처 지정
+    cfg = Config.fromfile('./configs/clrnet/clr_resnet34_tusimple.py') # 모델 아키텍처 지정
     #cfg = Config.fromfile('./configs/clrnet/clr_resnet101_tusimple.py') # 모델 아키텍처 지정
     #cfg = Config.fromfile('./configs/clrnet/clr_resnet101_culane.py') # 모델 아키텍처 지정
     cfg.gpus = 1 # gpu 개수 지정
-    cfg.load_from = '/home/macaron/바탕화면/clrnet_resnet34_culane_14.pth' # pt파일 경로
+    # cfg.load_from = '/home/macaron/바탕화면/clrnet_resnet34_culane_14.pth' # pt파일 경로
+    cfg.load_from = '/home/macaron/바탕화면/resize_tusimple.pth' # pt파일 경로
     #cfg.load_from = '/home/macaron/바탕화면/clrnet_resnet101_culane_9.pth' # pt파일 경로
     #cfg.load_from = '/home/macaron/바탕화면/clrnet_resnet34_tusimple_70.pth' # pt파일 경로
     #cfg.load_from = '/home/macaron/바탕화면/clrnet_resnet101_tusimple_70.pth' # pt파일 경로

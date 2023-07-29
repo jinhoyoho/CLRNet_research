@@ -31,12 +31,12 @@ while True:
         
     _, img = cap.read()
     image = img
+    img = cv2.imread('/home/macaron/바탕화면/CULane/driver_23_30frame/05151643_0420.MP4/00000.jpg')
     cv2.imshow('ori', img)
 
     print(img.shape) # (height, width, channel) = (1668, 1720, 3)
-    resized_img_1 = cv2.resize(img, dsize=(820, 320), interpolation=cv2.INTER_CUBIC)
-    print(resized_img_1.shape) 
-    # cv2.imshow("img", resized_img_1)
+    resized_img_1 = cv2.resize(img, dsize=(640, 480), interpolation=cv2.INTER_CUBIC)
+    cv2.imshow("img", resized_img_1)
     # cv2.waitKey()
     print(img)
     print("img_shape:", img.shape)

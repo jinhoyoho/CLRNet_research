@@ -46,8 +46,8 @@ save_ep = epochs
 img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])
 ori_img_w = 640
 ori_img_h = 480
-img_h = 320
-img_w = 800
+img_h = 640
+img_w = 480
 cut_height = 0
 
 train_process = [

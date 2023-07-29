@@ -68,9 +68,9 @@ class Runner(object):
             mat = cv2.getPerspectiveTransform(corner_points_arr, image_params) # mat = 변환행렬(3*3 행렬) 반
             data = cv2.warpPerspective(image, mat, (width, height))
             
-            ori_img = data
+            # ori_img = data
 
-            data = cv2.resize(data, (820, 320), interpolation=cv2.INTER_CUBIC)
+            data = cv2.resize(ori_img, (640, 480), interpolation=cv2.INTER_CUBIC)
             # img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])    
             data = data.astype(np.float32) / 255.0
             data = to_tensor(data)
