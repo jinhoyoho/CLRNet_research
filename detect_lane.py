@@ -25,9 +25,9 @@ def main():
     #cfg = Config.fromfile('./configs/clrnet/clr_resnet101_culane.py') # 모델 아키텍처 지정
     cfg.gpus = 1 # gpu 개수 지정
     # cfg.load_from = '/home/macaron/바탕화면/clrnet_resnet34_culane_14.pth' # pt파일 경로
-    cfg.load_from = '/home/macaron/바탕화면/resize_tusimple.pth' # pt파일 경로
+    #cfg.load_from = '/home/macaron/바탕화면/resize_tusimple.pth' # pt파일 경로
     #cfg.load_from = '/home/macaron/바탕화면/clrnet_resnet101_culane_9.pth' # pt파일 경로
-    #cfg.load_from = '/home/macaron/바탕화면/clrnet_resnet34_tusimple_70.pth' # pt파일 경로
+    cfg.load_from = '/home/jinho/바탕화면/clrnet_resnet34_tusimple_70.pth' # pt파일 경로
     #cfg.load_from = '/home/macaron/바탕화면/clrnet_resnet101_tusimple_70.pth' # pt파일 경로
     cfg.resume_from = args.resume_from
     cfg.finetune_from = args.finetune_from

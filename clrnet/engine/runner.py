@@ -51,39 +51,37 @@ class Runner(object):
             ori_img = image
             # self.center = [ori_img.shape[1] // 2, ori_img.shape[0] // 2] # w, h
 
-            p1 =  [215, 115]  # 좌상
-            p2 =  [405, 115] # 우상
-            p3 =  [640, 460] # 우하
-            p4 =  [0, 460]  # 좌하
-            # corners_point_arr는 변환 이전 이미지 좌표 4개 
-            corner_points_arr = np.float32([p1, p2, p3, p4])
-            height, width = image.shape[0], image.shape[1]
+            # p1 =  [215, 115]  # 좌상
+            # p2 =  [405, 115] # 우상
+            # p3 =  [640, 460] # 우하
+            # p4 =  [0, 460]  # 좌하
+            # # corners_point_arr는 변환 이전 이미지 좌표 4개 
+            # corner_points_arr = np.float32([p1, p2, p3, p4])
+            # height, width = image.shape[0], image.shape[1]
 
-            image_p1 = [20, 0] # 좌상
-            image_p2 = [width-20, 0] # 우상
-            image_p3 = [width - width//4, height] # 우하
-            image_p4 = [width//4, height] # 좌하
+            # image_p1 = [20, 0] # 좌상
+            # image_p2 = [width-20, 0] # 우상
+            # image_p3 = [width - width//4, height] # 우하
+            # image_p4 = [width//4, height] # 좌하
 
-            image_params = np.float32([image_p1, image_p2, image_p3, image_p4])
-            mat = cv2.getPerspectiveTransform(corner_points_arr, image_params) # mat = 변환행렬(3*3 행렬) 반
-            data = cv2.warpPerspective(image, mat, (width, height))
+            # image_params = np.float32([image_p1, image_p2, image_p3, image_p4])
+            # mat = cv2.getPerspectiveTransform(corner_points_arr, image_params) # mat = 변환행렬(3*3 행렬) 반
+            # data = cv2.warpPerspective(image, mat, (width, height))
             
             # ori_img = data
 
-            data = cv2.resize(ori_img, (640, 480), interpolation=cv2.INTER_CUBIC)
-            # img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])    
-            data = data.astype(np.float32) / 255.0
-            data = to_tensor(data)
-            # data = self.img2tensor(data) # tensor로 변환
-            data = data.permute(2, 0, 1)
-            data = data.unsqueeze(dim = 0)
-            data = data.to(device)
+            data = cv2.resize(ori_img, (800, 320), interpolation=cv2.INTER_CUBIC) # resize
+            data = data.astype(np.float32) / 255.0 # normalize
+            data = to_tensor(data) # tensor
+            data = data.permute(2, 0, 1) # BGR -> RGB
+            data = data.unsqueeze(dim = 0) # batch size
+            data = data.to(device) # cuda
             
             self.net.eval()
             predictions = []
 
             with torch.no_grad():
-                output = self.net(data)
+                output = self.net(data) # inference
                 output = self.net.module.heads.get_lanes(output)
                 predictions.extend(output)
                 lanes, count = imshow_lanes(ori_img, output) # 차선과 나온 개수

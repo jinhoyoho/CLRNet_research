@@ -44,10 +44,10 @@ eval_ep = 3
 save_ep = epochs
 
 img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])
-ori_img_w = 640
-ori_img_h = 480
-img_h = 640
-img_w = 480
+ori_img_w = 640 # 원본 이미지 가로
+ori_img_h = 480 # 원본 이미지 높이
+img_w = 800 # model에 넣을 가로
+img_h = 320 # model에 넣을 높이
 cut_height = 0
 
 train_process = [
