@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -- coding: utf-8 --
 net = dict(type='Detector', )
 
 backbone = dict(
@@ -9,7 +11,7 @@ backbone = dict(
 )
 
 num_points = 72
-max_lanes = 4
+max_lanes = 2
 
 heads = dict(type='CLRHead',
              num_priors=192,
@@ -43,11 +45,11 @@ eval_ep = 3
 save_ep = 10
 
 img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])
-ori_img_w = 640
-ori_img_h = 480
-img_w = 800
-img_h = 320
-cut_height = 0
+ori_img_w = 640 #640
+ori_img_h = 480 #480
+img_w = 800 # 800
+img_h = 320 # 320
+cut_height = 150
 
 train_process = [
     dict(

@@ -2,6 +2,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 import numpy as np
 
 
+
 class Lane:
     def __init__(self, points=None, invalid_value=-2., metadata=None):
         super(Lane, self).__init__()
@@ -27,9 +28,9 @@ class Lane:
                 (lane_ys > self.max_y)] = self.invalid_value
         return lane_xs
 
-    def to_array(self, ori_img_w, ori_img_h):
-        sample_y = range(470, 100, -10) # 차선 높이 설정
-        img_w, img_h = ori_img_w, ori_img_h
+    def to_array(self, width, height):
+        sample_y = range(height-1, height//2+20, -10) # 차선 높이 설정
+        img_w, img_h = width, height
         ys = np.array(sample_y) / float(img_h)
         xs = self(ys)
         valid_mask = (xs >= 0) & (xs < 1)

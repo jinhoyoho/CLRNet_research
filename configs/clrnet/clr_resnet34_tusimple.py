@@ -10,7 +10,6 @@ backbone = dict(
 
 num_points = 72
 max_lanes = 2
-sample_y = range(710, 150, -10)
 
 heads = dict(type='CLRHead',
              num_priors=192,
@@ -32,6 +31,7 @@ neck = dict(type='FPN',
             attention=False)
 
 test_parameters = dict(conf_threshold=0.40, nms_thres=50, nms_topk=max_lanes)
+# 임계값 설정
 
 epochs = 70 
 batch_size = 32 
@@ -44,11 +44,14 @@ eval_ep = 3
 save_ep = epochs
 
 img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.])
-ori_img_w = 640 # 원본 이미지 가로
-ori_img_h = 480 # 원본 이미지 높이
-img_w = 800 # model에 넣을 가로
-img_h = 320 # model에 넣을 높이
-cut_height = 0
+ori_img_w = 640 # 원래 이미지의 가로
+ori_img_h = 480 # 원래 이미지의 높이
+img_w = 640 # 모델에 넣을 이미지의 가로
+img_h = 480 # 모델에 넣을 이미지의 높이
+cut_height = 160
+
+world_x_interval = 0.02 # height
+world_y_interval = 0.015  # width 작을수록 map이 커짐
 
 train_process = [
     dict(
