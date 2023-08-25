@@ -38,9 +38,9 @@ torch==1.8.0+cu111 torchvision==0.9.0+cu111 torchaudio==0.8.0 -f https://downloa
 따라서 아래의 링크를 통해서 pth 파일을 다운로드 해야한다.
 (pt파일 다운 링크 추가해야 함)
 
-### 실행
+### Running
 ```Shell
-## 아래 코드를 실행하여 CLRNet을 실행할 준비를 해야함
+## 아래 코드를 실행하여 CLRNet을 실행할 준비를 해야함 (최초 한 번만 실행!)
 python setup.py build develop
 
 ## 실행
@@ -51,8 +51,11 @@ python detect_lane.py
 
 외부 파라미터 값을 정확히 맞춰줘야 정확한 Bird Eye View (BEV)를 얻을 수 있다.
 
+### Result
+![Birdeyeview 결과 사진](result.png)
 
 ## original site
+### CLRNet: Cross Layer Refinement Network for Lane Detection
 https://github.com/Turoad/CLRNet
 
 ## Reference site
