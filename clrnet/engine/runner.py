@@ -50,7 +50,7 @@ class Runner(object):
         
 
     def test(self): # test만 실행
-        try:
+        # try:
             ret, ori_img = self.cap.read() # 이미지 불러오기
             
             if ret: # 이미지가 있다면
@@ -143,8 +143,8 @@ class Runner(object):
                 print("Video 없음!")
                 return
         
-        except:
-            print("error!")
+        # except:
+        #     print("error!")
 
         
 # 차선 시각화

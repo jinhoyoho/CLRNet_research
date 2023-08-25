@@ -6,7 +6,7 @@ from configs.clrnet.clr_resnet34_tusimple import world_x_interval, world_y_inter
 class IBE(object):
     def __init__(self, extrinsic, intrinsic):
 
-        self.world_x_max = 12
+        self.world_x_max = 11
         self.world_x_min = 0.5 # height
         self.world_y_max = 4
         self.world_y_min = -4 # width

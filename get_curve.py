@@ -62,7 +62,6 @@ def get_steer(img, leftx, rightx, detect_one, detect_two):
     
     car_pos = img.shape[1]/2 # 중앙은 이미지의 중앙값
 
-    ym_per_pix =  world_x_interval # height
     xm_per_pix =  world_y_interval # width
     # -> configs에서 수정가능
 

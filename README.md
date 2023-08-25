@@ -52,7 +52,17 @@ python detect_lane.py
 외부 파라미터 값을 정확히 맞춰줘야 정확한 Bird Eye View (BEV)를 얻을 수 있다.
 
 ### Result
+![original 사진](ori.png)
+- original 사진
+
 ![Birdeyeview 결과 사진](result.png)
+- IPM을 이용한 BEV 사진
+
+![curve original 사진](ori_curve.png)
+- original curve 사진
+
+![Birdeyeview curve 결과 사진](result_curve.png)
+- BEV curve 사진
 
 ## original site
 ### CLRNet: Cross Layer Refinement Network for Lane Detection

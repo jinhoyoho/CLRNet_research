@@ -25,7 +25,6 @@ def main():
     
     cfg.load_from = 'pth파일 경로 입력' # pt파일 경로
     
-    
     cfg.resume_from = args.resume_from
     cfg.finetune_from = args.finetune_from
     cfg.view = args.view # 시각화
