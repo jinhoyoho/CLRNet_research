@@ -33,7 +33,7 @@ pip install -r requirements.txt
 torch==1.8.0+cu111 torchvision==0.9.0+cu111 torchaudio==0.8.0 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
-### pth 파일 다운로드
+### Download pth file
 용량이 너무 크기 때문에 github에 pth파일을 업로드 할 수 없다.
 따라서 아래의 링크를 통해서 pth 파일을 다운로드 해야한다.
 (pt파일 다운 링크 추가해야 함)
