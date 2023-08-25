@@ -15,23 +15,23 @@ Ubuntu20.04으로 실행가능
 
 
 ### Clone this repository
-'''Shell
+```Shell
 git clone https://github.com/jinhoyoho/CLRNet_research.git
-'''
+```
 
 ### Create a conda virtual environment and activate it (conda is optional)
 
-'''Shell
-# Conda 실행
+```Shell
+## Conda 실행
 conda create -n clrnet python=3.8 -y
 conda activate clrnet
 
-# 필요한 python pkg 설치
+## 필요한 python pkg 설치
 pip install -r requirements.txt
 
-# pytorch 및 cuda 설치
+## pytorch 및 cuda 설치
 torch==1.8.0+cu111 torchvision==0.9.0+cu111 torchaudio==0.8.0 -f https://download.pytorch.org/whl/torch_stable.html
-'''
+```
 
 ### pth 파일 다운로드
 용량이 너무 크기 때문에 github에 pth파일을 업로드 할 수 없다.
@@ -39,13 +39,13 @@ torch==1.8.0+cu111 torchvision==0.9.0+cu111 torchaudio==0.8.0 -f https://downloa
 (pt파일 다운 링크 추가해야 함)
 
 ### 실행
-'''Shell
-# 아래 코드를 실행하여 CLRNet을 실행할 준비를 해야함
+```Shell
+## 아래 코드를 실행하여 CLRNet을 실행할 준비를 해야함
 python setup.py build develop
 
-# 실행
+## 실행
 python detect_lane.py
-'''
+```
 
 실행하면 'result.png'와 같이 결과를 얻을 수 있다.
 
