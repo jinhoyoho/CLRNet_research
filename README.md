@@ -3,6 +3,7 @@
 
 ## Introduction
 CLRNet을 이용하여 custom data의 차선을 추출하고 Inverse Perspective Mapping을 이용하여 차량과 차선의 중앙 값을 구하는 코드
+(https://velog.io/@jinhoyoho/%EC%9E%90%EC%9C%A8%EC%A3%BC%ED%96%89-CLRNet-%EC%A0%81%EC%9A%A9%ED%95%B4%EB%B3%B4%EA%B8%B0)
 
 ## Installation
 
